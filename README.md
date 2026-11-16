@@ -1,1 +1,187 @@
-# gcats-autojudge-VER3
+# G-CATS Auto-Judgement
+
+Judgement support for IMDS material compliance at TMMIN. Import the daily G-CATS Error Check Log,
+let the rules engine work through each error, answer the few questions it cannot decide alone, and
+record a final OK/NG with its full evidence trail.
+
+**The engine recommends. A person decides.** Nothing is marked final until an Approver confirms it,
+and every recommendation keeps the reference versions and the step-by-step reasoning behind it.
+
+Runs entirely in the browser — the G-CATS data never leaves the machine it is opened on.
+
+## Screens
+
+| Screen | What it is for |
+| --- | --- |
+| **Overview** | KPI cards, completion, bottleneck, error types, by-supplier breakdown, trend, and the Download Summary |
+| **Judgment Workspace** | Internal judgment: every case with its evidence chain, status, and the decision panel. Switch to **Group by supplier & error type** to judge a whole group OK / NG in one step |
+| **Supplier Self-Check** | A searchable library of everything suppliers have told you (dropped or imported sheets, pasted cells, or typed in, older versions kept, backup / restore). Only the newest entry per part is used for judgement. Their answers feed the Judgment Workspace: where a sheet already answers the engine's supplier question (input mistake / contains / actual mass / non-intentional…), the engine follows its own flow from that answer; if it ends in OK the case is judged OK automatically ("Confirmed by supplier in Self-Check"), otherwise it stays a recommendation for an Approver. A reviewer's own answer always overrides. Two switches on the screen turn this off. |
+| **Daily G-CATS Update** | Import today's Error Check Log; answers and decisions already made are kept |
+| **Auto-Judgement History** | Append-only log of every answer, approval, override and re-open |
+| **Supplier Follow-up** | Per-supplier tracker (Need follow-up → Already followed up → Supplier replied) with the Outlook e-mail template, plus the rejected-part resubmission tracker. Summarised on the Overview. |
+| **Substance References** | CAS lookup: GADSL → TSZ0001G group → POPs / REACH XVII / REACH XIV |
+| **Judgement Rules** | The Appendix II flows the engine follows |
+
+### Light and dark mode
+
+The toggle sits in the page header, next to your role. The app follows your system setting on first
+visit, then remembers whatever you pick. Green still means OK and red still means NG in both themes;
+the interface accents are cyan and violet so they never compete with a judgement colour.
+
+### Typefaces
+
+Urbanist and JetBrains Mono, loaded from Google Fonts. If your IT blocks that, the app falls back to
+system fonts and keeps working — but to self-host instead:
+
+1. Download both families (fonts.google.com) and put the `.woff2` files in `public/fonts/`.
+2. In `public/index.html`, delete the two `fonts.googleapis.com` `<link>` tags and add matching
+   `@font-face` rules at the top of the `<style>` block.
+3. In `vercel.json`, drop `https://fonts.googleapis.com` and `https://fonts.gstatic.com` from the
+   Content-Security-Policy header.
+
+## Deploy on Vercel
+
+1. Go to [vercel.com/new](https://vercel.com/new) and import `jasminefleury/gcats-autojudge-VER3`.
+2. Framework preset: **Other**. Leave the build command empty. `vercel.json` already sets the output
+   directory to `public` and adds the security headers.
+3. Deploy. Every push to `main` redeploys automatically.
+
+Because the data stays in the browser, the deployment is just static hosting — no server, no database.
+Anyone who can open the URL can use the app, so **protect the deployment**: in Vercel, turn on
+Deployment Protection (Settings → Deployment Protection) or keep it to your Vercel team.
+
+### Run it locally
+
+Open `public/index.html` in a browser. That is all — there is no build step.
+
+## Daily workflow
+
+1. Download today's G-CATS Error Check Log and save it as `.xlsx` (old `.xls` must be re-saved first).
+2. **Daily G-CATS Update** → drop the file in → check the preview → *Commit to register*.
+3. **Overview** → start with what needs attention.
+4. **Judgement Register** → open a case, read the evidence chain, answer the engine's question.
+   *Apply to identical cases* answers a whole group at once; any case that reaches a different
+   result on its own data is split back out. Or switch to **Group by supplier & error type** and
+   judge a supplier's whole error group OK / NG in one confirmed step.
+5. Set your role to **Approver** to confirm a final OK/NG. A comment is always required; overriding
+   the engine, or deciding a case it could not judge, also requires a written justification.
+6. Export:
+   - **Excel (Error Log format)** — three sheets: the G-CATS layout ready to upload back, the judgement
+     summary, and a "How to read" legend.
+   - **Summary report (Excel)** — the judgement summary on its own, in the G-CATS Error Check Log
+     column layout plus the full judgement record: engine procedure, OK/NG, the record-of-changing-to-OK
+     comment, any override justification, who decided, their role and when. Status is a solid fill:
+     green OK, red NG, amber needs input, violet human review.
+   - **Printable summary** (PDF via your browser) and **CSV**.
+
+### Supplier Self-Check: drag & drop
+
+Drop files anywhere on the **Supplier Self-Check** screen (or click the drop zone to choose them):
+
+- the supplier's **IMDS Information Form** (`.xlsx`) — several files at once;
+- a **CSV** with the same columns (the sheet's own headings or the on-screen labels);
+- a library **backup** (`.json`), merged into what is already there;
+- or copy cells in Excel — header row included — and press **Ctrl+V** on the screen.
+
+Each file is read, added to the library and fed into the Judgment Workspace straight away. The
+upload result lists every file (added / already in the library — skipped / why it was refused) and
+the supplier × error-type groups it touched, with a button that opens those groups for judgment.
+An old `.xls` or a G-CATS Error Check Log dropped here by mistake is refused with a hint.
+**+ Add entry** (typing by hand) and **⬆ Import sheet** still work as before.
+
+### Group judgment (bulk OK / NG)
+
+In the **Judgment Workspace**, switch from **☰ List** to **▦ Group by supplier & error type**.
+Cases are grouped by **supplier code and error type together**:
+
+- two suppliers are never in one group, even with the same error type;
+- two error types are never in one group, even for the same supplier;
+- a case with no supplier code is never grouped — it is listed under *Judge on their own*.
+
+Each card shows the error type, the supplier, the **number of part numbers** (and cases), what the
+engine recommends, and every part number with its own status. Untick any part number you want to
+leave out, then click **Judge all OK** or **Judge all NG**. A confirmation step lists exactly which
+part numbers will change, how many match the engine's recommendation, and asks for:
+
+- the comment (required, saved on every case) and, for NG, the IMDS reject comment;
+- an override justification when the decision goes against (or without) an engine recommendation;
+- a tick on *"I have reviewed these cases…"* before **Apply** is enabled.
+
+Nothing is saved if a required field is missing. On Apply, every selected case gets the same final
+OK / NG at once, recorded as **Manual judgment (group)** with your name, role and time, plus one
+**BULK_JUDGE** line in History. Only an Approver or Administrator can apply it. Cases that are
+already judged are never overwritten, and cases waiting for TMC / TMNA confirmation are left out.
+**↺ Re-open the … judged together** takes a group judgment back; each case can also still be opened
+and judged on its own.
+
+### Internal judgment statuses
+
+A case carries one status, in this order of precedence:
+
+| Status | Set by | Meaning |
+| --- | --- | --- |
+| **OK / NG** | Approver, or the WARP rule | A final judgement is recorded, with comment, reviewer and date |
+| **⚠️ Need confirmation to supplier** | Any reviewer | Parked until the supplier answers; the reason is recorded |
+| **Working** | Any reviewer | Taken for internal judgment, with the reviewer's name |
+| Needs input / Recommend OK / Recommend NG / Human review | The engine | Where the Appendix II flow stopped |
+
+A final NG also carries an **IMDS reject comment**, kept separately from the internal comment.
+
+### Confirm to TMC / TMNA first
+
+When an Appendix II flow ends in *Contact to TMC / TMNA / TME / TDEM*, the case is **held**: it shows
+*Confirm to TMC first*, cannot be finalized, and is tracked under **Supplier Follow-up → TMC / TMNA
+confirmation** (Confirm to TMC → Sent → TMC answered, with an e-mail draft). Once TMC's OK / NG is recorded,
+an Approver records the final judgement with that answer pre-filled. Supplier self-check answers never skip this step.
+
+### WARP part number auto-judgment
+
+A WARP part-number case is judged **OK automatically** when all of the following hold:
+
+1. the supplier code is present and registered in the Purchasing supplier code master;
+2. the company name matches that master entry *(switchable)*;
+3. the Appendix II flow itself also reaches OK *(switchable)*.
+
+The master is Purchasing's own registration, so a code found in it counts as confirmed by
+Purchasing. A missing or unregistered supplier code is **never** auto-judged — it stays pending for
+internal judgment, as does any case the flow cannot settle. Auto-judged rows are marked
+**Auto Judged**, carry a timestamp and the reason, and an existing manual judgement is never
+overwritten. Every case shows why it did or did not qualify.
+
+### Destination codes
+
+The reviewer picks the TMMIN destination code (No code, A, B, C …). The judgement rules are written
+against seven regulatory regions, so each code carries the region used for Appendix 3 and the Pb
+TOYOTA policy table — the mapping is listed in **Judgement Rules** and in the summary workbook.
+Region meanings come from the Pb table's own note: EU = Europe, Israel, Turkey · KR = Korea ·
+CN = China · TW = Taiwan · IN = India · JP = Japan · OTH = everywhere else.
+
+Codes that cover more than one region are split so the reviewer states which applies: *No code*
+becomes Japan or General Export, *X* becomes Russia or India, and *V* becomes Israel or the other
+Middle and Near East countries. Korea has no code in the TMMIN chart but is offered because the
+rules treat it separately.
+
+Each row is matched by module ID, version, error type, component, material and CAS — never by the
+daily "No." — so tomorrow's import refreshes the register without losing your work.
+
+## Data and storage
+
+Your work lives in the browser's local storage, per browser and per machine. Clearing site data
+erases it, and colleagues do not see each other's work. Export regularly.
+
+Reference data embedded in the app: GADSL 2026, TSZ0001G Rev.30 (Appendix 2), Appendix 3 POPs,
+Appendix 4 REACH XVII, Appendix 5 REACH XIV, TSZ2900G mass tolerance, the Pb TOYOTA policy table
+and the supplier code master.
+
+> Most reference sets are still marked `EXTRACTED_PENDING_ADMIN_APPROVAL`, and the Pb policy table is
+> a draft transcription awaiting verification. Until their owners sign them off, treat every
+> recommendation as a suggestion to check, not an answer to trust.
+
+This reference data is Toyota PROTECTED material. Keep this repository private.
+
+## Repository
+
+```
+public/index.html    the whole app — engine, interface, styles and reference data in one file
+vercel.json          output directory and security headers
+```
